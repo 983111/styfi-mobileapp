@@ -1,29 +1,3 @@
-<<<<<<< HEAD
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
-
-val newBuildDir: Directory =
-    rootProject.layout.buildDirectory
-        .dir("../../build")
-        .get()
-rootProject.layout.buildDirectory.value(newBuildDir)
-
-subprojects {
-    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
-    project.layout.buildDirectory.value(newSubprojectBuildDir)
-}
-subprojects {
-    project.evaluationDependsOn(":app")
-}
-
-tasks.register<Delete>("clean") {
-    delete(rootProject.layout.buildDirectory)
-}
-=======
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -67,4 +41,3 @@ android {
 flutter {
     source = "../.."
 }
->>>>>>> 3f6fdc3 (Initial commit: Add Styfi mobile app source code and database configurations)
