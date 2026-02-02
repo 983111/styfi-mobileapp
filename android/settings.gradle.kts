@@ -23,4 +23,8 @@ plugins {
     id("com.google.gms.google-services") version "4.4.0" apply false
 }
 
+<<<<<<< HEAD
 include(":app")
+=======
+include(":app")
+>>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582

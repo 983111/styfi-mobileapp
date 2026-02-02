@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
 import 'package:google_fonts/google_fonts.dart';
+=======
+>>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
 import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -33,15 +36,20 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
 
     if (error != null && mounted) {
+<<<<<<< HEAD
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(error), backgroundColor: Colors.red),
       );
+=======
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+>>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+<<<<<<< HEAD
       backgroundColor: const Color(0xFFFFF1F2),
       body: Center(
         child: SingleChildScrollView(
@@ -120,8 +128,49 @@ class _LoginScreenState extends State<LoginScreen> {
               )
             ],
           ),
+=======
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(_isLogin ? "Welcome Back" : "Create Account", 
+              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 24),
+            TextField(
+              controller: _emailController,
+              decoration: const InputDecoration(labelText: "Email", border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _passController,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: "Password", border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _submit,
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE11D48), foregroundColor: Colors.white),
+                child: _isLoading 
+                  ? const CircularProgressIndicator(color: Colors.white) 
+                  : Text(_isLogin ? "Login" : "Sign Up"),
+              ),
+            ),
+            TextButton(
+              onPressed: () => setState(() => _isLogin = !_isLogin),
+              child: Text(_isLogin ? "Need an account? Sign Up" : "Have an account? Login"),
+            )
+          ],
+>>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
         ),
       ),
     );
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582

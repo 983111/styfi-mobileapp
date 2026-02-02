@@ -48,6 +48,28 @@ class StyfiApp extends StatelessWidget {
           return const LoginScreen();
         },
       ),
+<<<<<<< HEAD
+=======
+    );
+  }
+}
+
+class RoleManager extends StatelessWidget {
+  const RoleManager({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // Listen to the role stored in AuthService (fetched from Firestore)
+    return ValueListenableBuilder<UserRole>(
+      valueListenable: AuthService().roleNotifier,
+      builder: (context, role, _) {
+        if (role == UserRole.buyer) {
+          return const MainScreen();
+        } else {
+          return const SellerDashboardScreen();
+        }
+      },
+>>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
     );
   }
 }

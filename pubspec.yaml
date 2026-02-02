@@ -10,6 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   
+<<<<<<< HEAD
   # Firebase Bundle
   firebase_core: ^4.4.0
   firebase_auth: ^6.1.4
@@ -20,6 +21,18 @@ dependencies:
   image_picker: ^1.0.7
   cached_network_image: ^3.4.1
   google_fonts: ^8.0.0
+=======
+  firebase_core: ^4.4.0
+  firebase_auth: ^6.1.4
+  cloud_firestore: ^6.1.2
+  
+  http: ^1.2.0
+  
+  image_picker: ^1.0.7
+  cached_network_image: ^3.4.1
+  google_fonts: ^8.0.0
+  
+>>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
   flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:

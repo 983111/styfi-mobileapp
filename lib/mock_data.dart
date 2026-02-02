@@ -50,4 +50,8 @@ final List<Product> mockProducts = [
       image: 'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?auto=format&fit=crop&w=1000&q=80',
       description: 'Flowy midi skirt with pleats.',
       sellerId: 'Bloom & Co'),
+<<<<<<< HEAD
 ];
+=======
+];
+>>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582

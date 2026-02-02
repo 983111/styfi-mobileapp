@@ -1,10 +1,15 @@
+<<<<<<< HEAD
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+=======
+import 'package:cloud_firestore/cloud_firestore.dart';
+>>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
 import '../models.dart';
 
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+<<<<<<< HEAD
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
   // --- Products ---
@@ -12,10 +17,20 @@ class DatabaseService {
     return _db.collection('products')
         .orderBy('createdAt', descending: true)
         .snapshots().map((snapshot) {
+=======
+
+  // Get all products (For Marketplace)
+  Stream<List<Product>> getProducts() {
+    return _db.collection('products').snapshots().map((snapshot) {
+>>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
       return snapshot.docs.map((doc) => Product.fromMap(doc.data(), doc.id)).toList();
     });
   }
 
+<<<<<<< HEAD
+=======
+  // Get products for a specific seller (For Seller Dashboard)
+>>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
   Stream<List<Product>> getSellerProducts(String sellerId) {
     return _db.collection('products')
         .where('sellerId', isEqualTo: sellerId)
@@ -25,6 +40,7 @@ class DatabaseService {
     });
   }
 
+<<<<<<< HEAD
   // --- Image Upload Function (Required for Seller) ---
   Future<String> uploadProductImage(File imageFile, String uid) async {
     try {
@@ -78,3 +94,10 @@ class DatabaseService {
     await _db.collection('orders').doc(orderId).update({'status': newStatus});
   }
 }
+=======
+  // Add a product
+  Future<void> addProduct(Product product) async {
+    await _db.collection('products').add(product.toMap());
+  }
+}
+>>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
