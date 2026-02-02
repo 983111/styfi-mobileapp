@@ -10,6 +10,11 @@ dependencies:
   flutter:
     sdk: flutter
   
+  # Firebase Core Dependencies
+  firebase_core: ^2.27.0
+  firebase_auth: ^4.17.8
+  cloud_firestore: ^4.15.8
+  
   # Networking
   http: ^1.2.0
   
@@ -18,7 +23,7 @@ dependencies:
   cached_network_image: ^3.3.1
   google_fonts: ^6.1.0
 
-  # Icon for the app (optional but good for release)
+  # Icon
   flutter_launcher_icons: ^0.13.1
 
 dev_dependencies:
