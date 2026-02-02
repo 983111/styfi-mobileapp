@@ -1,8 +1,31 @@
+name: styfi
+description: A new Flutter project.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.3 <4.0.0'
+
 dependencies:
   flutter:
     sdk: flutter
+  
+  # Networking
   http: ^1.2.0
+  
+  # UI & Media
   image_picker: ^1.0.7
+  cached_network_image: ^3.3.1
   google_fonts: ^6.1.0
-  lucide_icons: ^0.3.0 # Or use material_design_icons_flutter
-  cached_network_image: ^3.3.1 # For product images
+  lucide_icons: ^0.3.0
+
+  # Icon for the app (optional but good for release)
+  flutter_launcher_icons: ^0.13.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
