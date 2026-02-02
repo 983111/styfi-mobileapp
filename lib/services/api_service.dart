@@ -6,13 +6,11 @@ import '../models.dart';
 class ApiService {
   static const String baseUrl = 'https://styfi-backend.vishwajeetadkine705.workers.dev';
 
-  // Helper to convert file to Base64
   static Future<String> fileToBase64(File file) async {
     List<int> imageBytes = await file.readAsBytes();
     return base64Encode(imageBytes);
   }
 
-  // Helper to fetch network image to Base64 (for try-on product image)
   static Future<String?> networkImageToBase64(String imageUrl) async {
     try {
       final response = await http.get(Uri.parse(imageUrl));
@@ -41,7 +39,7 @@ class ApiService {
     } catch (e) {
       print("Error fetching trends: $e");
     }
-    // Fallback data
+    
     return [
       TrendReport(
           trendName: "Eco-Minimalism",
@@ -88,7 +86,7 @@ class ApiService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'imageData': base64Data,
-          'mimeType': 'image/jpeg', // Assuming jpeg for simplicity
+          'mimeType': 'image/jpeg', 
           'description': description
         }),
       );
@@ -96,7 +94,7 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['method'] == 'imagen' && data['imageData'] != null) {
-          return AiResult(type: 'image', data: data['imageData']); // Base64 string
+          return AiResult(type: 'image', data: data['imageData']);
         } else if (data['method'] == 'guide' && data['enhancementGuide'] != null) {
           return AiResult(type: 'guide', data: data['enhancementGuide']);
         }
