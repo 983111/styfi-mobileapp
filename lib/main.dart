@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // Import Supabase
 import 'package:google_fonts/google_fonts.dart';
 import 'services/auth_service.dart';
 import 'screens/home_screen.dart';
@@ -9,8 +10,16 @@ import 'models.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(); // Initialize Firebase
   
+  // 1. Initialize Firebase
+  await Firebase.initializeApp(); 
+  
+  // 2. Initialize Supabase (Replace with your actual keys)
+  await Supabase.initialize(
+    url: 'https://fxfwxcipaxxhflpyifkd.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4Znd4Y2lwYXh4aGZscHlpZmtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNDMzMzMsImV4cCI6MjA4NTYxOTMzM30.6fJ2BtVEoEs-v6AlYuFGMxUyfTYxYBTygj9VIiIsDBo',
+  );
+
   // Start listening to user role changes
   AuthService().init();
   
@@ -48,28 +57,6 @@ class StyfiApp extends StatelessWidget {
           return const LoginScreen();
         },
       ),
-<<<<<<< HEAD
-=======
-    );
-  }
-}
-
-class RoleManager extends StatelessWidget {
-  const RoleManager({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // Listen to the role stored in AuthService (fetched from Firestore)
-    return ValueListenableBuilder<UserRole>(
-      valueListenable: AuthService().roleNotifier,
-      builder: (context, role, _) {
-        if (role == UserRole.buyer) {
-          return const MainScreen();
-        } else {
-          return const SellerDashboardScreen();
-        }
-      },
->>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
     );
   }
 }
