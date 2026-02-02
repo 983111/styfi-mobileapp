@@ -1,4 +1,3 @@
-// lib/services/auth_service.dart
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
@@ -15,7 +14,7 @@ class AuthService {
   // Notifier for the UI to listen to role changes
   final ValueNotifier<UserRole> roleNotifier = ValueNotifier(UserRole.buyer);
   
-  // Helper getter for UI (Fixes error in ProfileScreen)
+  // Helper getter for UI
   UserRole get currentRole => roleNotifier.value;
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();
@@ -36,7 +35,6 @@ class AuthService {
     });
   }
 
-  // Wrappers to fix "Method not found" errors
   Future<void> switchToSeller() async {
     await switchRole(UserRole.seller);
   }
@@ -51,7 +49,6 @@ class AuthService {
       await _db.collection('users').doc(user.uid).update({
         'role': newRole == UserRole.seller ? 'seller' : 'buyer'
       });
-      // Optimistic update for immediate UI feedback
       roleNotifier.value = newRole;
     }
   }
@@ -85,8 +82,4 @@ class AuthService {
   Future<void> signOut() async {
     await _auth.signOut();
   }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
