@@ -1,8 +1,9 @@
+// lib/screens/outfit_composer_screen.dart
 import 'package:flutter/material.dart';
 import '../mock_data.dart';
 import '../models.dart';
 import '../services/api_service.dart';
-import 'marketplace_screen.dart';
+import 'marketplace_screen.dart'; // FIX: This import allows access to ProductCard
 
 class OutfitComposerScreen extends StatefulWidget {
   const OutfitComposerScreen({super.key});
@@ -36,7 +37,7 @@ class _OutfitComposerScreenState extends State<OutfitComposerScreen> {
     return Scaffold(
       body: Row(
         children: [
-          // Product Selector (Left Side on Tablet, Top on Mobile usually, but we stick to split)
+          // Product Selector
           Expanded(
             flex: 2,
             child: ListView.builder(
@@ -55,7 +56,7 @@ class _OutfitComposerScreenState extends State<OutfitComposerScreen> {
                     ),
                     child: Row(
                       children: [
-                         SizedBox(width: 80, child: ProductCard(product: p)),
+                         SizedBox(width: 80, child: ProductCard(product: p)), // Now correctly found
                          const SizedBox(width: 10),
                          Expanded(child: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold))),
                       ],
