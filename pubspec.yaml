@@ -17,7 +17,6 @@ dependencies:
   image_picker: ^1.0.7
   cached_network_image: ^3.3.1
   google_fonts: ^6.1.0
-  lucide_icons: ^0.3.0
 
   # Icon for the app (optional but good for release)
   flutter_launcher_icons: ^0.13.1

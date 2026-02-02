@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'marketplace_screen.dart';
 import 'outfit_composer_screen.dart';
 import 'trend_detector_screen.dart';
