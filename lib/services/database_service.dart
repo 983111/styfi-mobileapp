@@ -1,36 +1,21 @@
-<<<<<<< HEAD
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-=======
-import 'package:cloud_firestore/cloud_firestore.dart';
->>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
+import 'package:supabase_flutter/supabase_flutter.dart'; // Import Supabase
 import '../models.dart';
 
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
-<<<<<<< HEAD
-  final FirebaseStorage _storage = FirebaseStorage.instance;
+  final SupabaseClient _supabase = Supabase.instance.client; // Supabase Client
 
   // --- Products ---
   Stream<List<Product>> getProducts() {
     return _db.collection('products')
         .orderBy('createdAt', descending: true)
         .snapshots().map((snapshot) {
-=======
-
-  // Get all products (For Marketplace)
-  Stream<List<Product>> getProducts() {
-    return _db.collection('products').snapshots().map((snapshot) {
->>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
       return snapshot.docs.map((doc) => Product.fromMap(doc.data(), doc.id)).toList();
     });
   }
 
-<<<<<<< HEAD
-=======
-  // Get products for a specific seller (For Seller Dashboard)
->>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
   Stream<List<Product>> getSellerProducts(String sellerId) {
     return _db.collection('products')
         .where('sellerId', isEqualTo: sellerId)
@@ -40,17 +25,25 @@ class DatabaseService {
     });
   }
 
-<<<<<<< HEAD
-  // --- Image Upload Function (Required for Seller) ---
+  // --- Image Upload Function (Switched to Supabase) ---
   Future<String> uploadProductImage(File imageFile, String uid) async {
     try {
-      String fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-      Reference ref = _storage.ref().child('products/$uid/$fileName');
+      // 1. Generate unique path: products/{uid}/{timestamp}.jpg
+      final String fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final String path = '$uid/$fileName';
+
+      // 2. Upload to Supabase Storage (Bucket name: 'products')
+      // Make sure you create a bucket named 'products' in your Supabase dashboard and make it Public.
+      await _supabase.storage.from('products').upload(
+        path,
+        imageFile,
+        fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
+      );
+
+      // 3. Get Public URL
+      final String imageUrl = _supabase.storage.from('products').getPublicUrl(path);
       
-      UploadTask uploadTask = ref.putFile(imageFile);
-      TaskSnapshot snapshot = await uploadTask;
-      
-      return await snapshot.ref.getDownloadURL();
+      return imageUrl;
     } catch (e) {
       print("Upload Error: $e");
       throw Exception("Image upload failed: $e");
@@ -65,7 +58,7 @@ class DatabaseService {
     await _db.collection('products').doc(productId).delete();
   }
 
-  // --- Orders Logic (Required for Checkout) ---
+  // --- Orders Logic ---
   Future<void> placeFullOrder(String buyerId, Product product, Address address, String paymentMethod) async {
     final order = OrderModel(
       id: '',
@@ -94,10 +87,3 @@ class DatabaseService {
     await _db.collection('orders').doc(orderId).update({'status': newStatus});
   }
 }
-=======
-  // Add a product
-  Future<void> addProduct(Product product) async {
-    await _db.collection('products').add(product.toMap());
-  }
-}
->>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
