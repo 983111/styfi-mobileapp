@@ -1,12 +1,8 @@
-// lib/screens/marketplace_screen.dart
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models.dart';
 import '../services/database_service.dart';
-<<<<<<< HEAD
-import 'checkout_screen.dart'; // Import Checkout
-=======
->>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
+import 'checkout_screen.dart';
 
 class MarketplaceScreen extends StatelessWidget {
   const MarketplaceScreen({super.key});
@@ -16,10 +12,10 @@ class MarketplaceScreen extends StatelessWidget {
     return StreamBuilder<List<Product>>(
       stream: DatabaseService().getProducts(),
       builder: (context, snapshot) {
-<<<<<<< HEAD
         if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
         
         final products = snapshot.data!;
+        if (products.isEmpty) return const Center(child: Text("No products available"));
 
         return ListView(
           padding: const EdgeInsets.all(16),
@@ -90,8 +86,7 @@ class MarketplaceScreen extends StatelessWidget {
               height: 56,
               child: ElevatedButton(
                 onPressed: () {
-                  // Navigate to Checkout Screen instead of instant buy
-                  Navigator.pop(context); // Close bottom sheet
+                  Navigator.pop(context); 
                   Navigator.push(
                     context, 
                     MaterialPageRoute(builder: (_) => CheckoutScreen(product: product))
@@ -108,70 +103,10 @@ class MarketplaceScreen extends StatelessWidget {
           ],
         ),
       ),
-=======
-        // Fallback for loading/error or empty states
-        if (snapshot.hasError) return const Center(child: Text("Error loading products"));
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-
-        final products = snapshot.data!;
-
-        if (products.isEmpty) {
-          return const Center(child: Text("No products found"));
-        }
-
-        return ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            // Hero Section
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                image: const DecorationImage(
-                  image: CachedNetworkImageProvider('https://images.unsplash.com/photo-1483985988355-763728e1935b'),
-                  fit: BoxFit.cover,
-                  opacity: 0.2,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Curated style,\npowered by AI", 
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.grey[900])),
-                  const SizedBox(height: 10),
-                  const Text("Connect with small businesses and use AI to upgrade your wardrobe.",
-                    style: TextStyle(fontSize: 16, color: Colors.black87)),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text("Featured Collections", 
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.7,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-              ),
-              itemCount: products.length,
-              itemBuilder: (context, index) {
-                return ProductCard(product: products[index]);
-              },
-            ),
-          ],
-        );
-      },
->>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
     );
   }
 }
 
-// FIX: Added the missing ProductCard class
 class ProductCard extends StatelessWidget {
   final Product product;
   const ProductCard({super.key, required this.product});
