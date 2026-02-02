@@ -1,4 +1,3 @@
-// lib/mock_data.dart
 import 'models.dart';
 
 final List<Product> mockProducts = [
@@ -9,7 +8,7 @@ final List<Product> mockProducts = [
       category: 'Tops',
       image: 'https://images.unsplash.com/photo-1551163943-3f6a29e39bb7?auto=format&fit=crop&w=1000&q=80',
       description: 'Elegant silk wrap blouse in soft pink.',
-      sellerId: 'Studio 45'), // Changed from seller to sellerId
+      sellerId: 'Studio 45'),
   Product(
       id: '2',
       name: 'High-Rise Trousers',
@@ -50,8 +49,4 @@ final List<Product> mockProducts = [
       image: 'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?auto=format&fit=crop&w=1000&q=80',
       description: 'Flowy midi skirt with pleats.',
       sellerId: 'Bloom & Co'),
-<<<<<<< HEAD
 ];
-=======
-];
->>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
