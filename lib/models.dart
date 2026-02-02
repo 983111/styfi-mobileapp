@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import 'package:cloud_firestore/cloud_firestore.dart';
-=======
-// lib/models.dart
->>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
 
 enum UserRole { buyer, seller }
 
@@ -20,8 +16,6 @@ class AppUser {
       role: data['role'] == 'seller' ? UserRole.seller : UserRole.buyer,
     );
   }
-<<<<<<< HEAD
-=======
 
   Map<String, dynamic> toMap() {
     return {
@@ -29,7 +23,6 @@ class AppUser {
       'role': role == UserRole.seller ? 'seller' : 'buyer',
     };
   }
->>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
 }
 
 class Product {
@@ -39,11 +32,7 @@ class Product {
   final String category;
   final String image;
   final String description;
-<<<<<<< HEAD
   final String sellerId;
-=======
-  final String sellerId; // Renamed from 'seller' to 'sellerId' for consistency
->>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
 
   Product({
     required this.id,
@@ -55,10 +44,6 @@ class Product {
     required this.sellerId,
   });
 
-<<<<<<< HEAD
-=======
-  // Convert from Firestore Document
->>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
   factory Product.fromMap(Map<String, dynamic> data, String id) {
     return Product(
       id: id,
@@ -71,10 +56,6 @@ class Product {
     );
   }
 
-<<<<<<< HEAD
-=======
-  // Convert to Firestore Map
->>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
   Map<String, dynamic> toMap() {
     return {
       'name': name,
@@ -83,10 +64,7 @@ class Product {
       'image': image,
       'description': description,
       'sellerId': sellerId,
-<<<<<<< HEAD
       'createdAt': FieldValue.serverTimestamp(),
-=======
->>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
     };
   }
 }
@@ -116,7 +94,7 @@ class OrderModel {
   final Product product;
   final Address address;
   final String paymentMethod;
-  final String status; // 'Processing', 'Shipped', 'Delivered'
+  final String status;
   final DateTime date;
 
   OrderModel({
@@ -134,7 +112,7 @@ class OrderModel {
     return {
       'buyerId': buyerId,
       'sellerId': sellerId,
-      'product': product.toMap(), // Store snapshot of product data at time of purchase
+      'product': product.toMap(),
       'address': address.toMap(),
       'paymentMethod': paymentMethod,
       'status': status,
@@ -156,29 +134,29 @@ class OrderModel {
   }
 }
 
-// Keep existing AI/Trend classes
 class OutfitSuggestion {
-  final String name; final String reason; final String estimatedPrice; final String color;
+  final String name; 
+  final String reason; 
+  final String estimatedPrice; 
+  final String color;
+  
   OutfitSuggestion({required this.name, required this.reason, required this.estimatedPrice, required this.color});
-  factory OutfitSuggestion.fromJson(Map<String, dynamic> json) => OutfitSuggestion(name: json['name']??'', reason: json['reason']??'', estimatedPrice: json['estimatedPrice']??'', color: json['color']??'');
+  
+  factory OutfitSuggestion.fromJson(Map<String, dynamic> json) => OutfitSuggestion(
+    name: json['name']??'', 
+    reason: json['reason']??'', 
+    estimatedPrice: json['estimatedPrice']??'', 
+    color: json['color']??''
+  );
 }
+
 class TrendReport {
-<<<<<<< HEAD
-  final String trendName; final String description; final int popularityScore; final List<String> keyKeywords;
-  TrendReport({required this.trendName, required this.description, required this.popularityScore, required this.keyKeywords});
-  factory TrendReport.fromJson(Map<String, dynamic> json) => TrendReport(trendName: json['trendName']??'', description: json['description']??'', popularityScore: json['popularityScore']??0, keyKeywords: List<String>.from(json['keyKeywords']??[]));
-=======
-  final String trendName;
-  final String description;
-  final int popularityScore;
+  final String trendName; 
+  final String description; 
+  final int popularityScore; 
   final List<String> keyKeywords;
 
-  TrendReport({
-    required this.trendName,
-    required this.description,
-    required this.popularityScore,
-    required this.keyKeywords,
-  });
+  TrendReport({required this.trendName, required this.description, required this.popularityScore, required this.keyKeywords});
 
   factory TrendReport.fromJson(Map<String, dynamic> json) {
     return TrendReport(
@@ -194,6 +172,4 @@ class AiResult {
   final String type;
   final String data;
   AiResult({required this.type, required this.data});
->>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
 }
-class AiResult { final String type; final String data; AiResult({required this.type, required this.data}); }
