@@ -1,4 +1,3 @@
-// lib/screens/profile_screen.dart
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../models.dart';
@@ -9,7 +8,6 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authService = AuthService();
-    // This will now work because we added 'currentRole' getter to AuthService
     final isBuyer = authService.currentRole == UserRole.buyer;
 
     return Scaffold(
@@ -19,7 +17,6 @@ class ProfileScreen extends StatelessWidget {
           child: Column(
             children: [
               const SizedBox(height: 20),
-              // Profile Header
               CircleAvatar(
                 radius: 50,
                 backgroundColor: isBuyer ? const Color(0xFFE11D48) : Colors.black87,
@@ -36,7 +33,6 @@ class ProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 40),
 
-              // The Mode Switch Card
               Card(
                 elevation: 4,
                 shadowColor: Colors.black12,
@@ -108,8 +104,4 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 9b3456e6285ce023c13c7915bd9d5a11a4f51582
