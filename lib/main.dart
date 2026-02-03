@@ -1,28 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // Import Supabase
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'services/auth_service.dart';
-import 'screens/home_screen.dart';
-import 'screens/seller_dashboard.dart';
-import 'screens/login_screen.dart';
 import 'models.dart';
+import 'screens/home_screen.dart'; // Buyer Screen
+import 'screens/login_screen.dart';
+import 'screens/seller_dashboard.dart'; // Seller Screen
+import 'screens/role_selection_screen.dart'; // Selection Screen
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // 1. Initialize Firebase
-  await Firebase.initializeApp(); 
-  
-  // 2. Initialize Supabase (Replace with your actual keys)
+  await Firebase.initializeApp();
   await Supabase.initialize(
     url: 'https://fxfwxcipaxxhflpyifkd.supabase.co',
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4Znd4Y2lwYXh4aGZscHlpZmtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNDMzMzMsImV4cCI6MjA4NTYxOTMzM30.6fJ2BtVEoEs-v6AlYuFGMxUyfTYxYBTygj9VIiIsDBo',
   );
-
-  // Start listening to user role changes
-  AuthService().init();
   
+  AuthService().init(); // Start listening to role changes
   runApp(const StyfiApp());
 }
 
@@ -32,49 +27,45 @@ class StyfiApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Styfi',
+      title: 'Styfi Amazon Clone',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFE11D48), 
-          primary: const Color(0xFFE11D48),
-          secondary: const Color(0xFFFDA4AF),
-          surface: const Color(0xFFFFF1F2), 
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFE11D48)),
         useMaterial3: true,
         textTheme: GoogleFonts.interTextTheme(),
-        scaffoldBackgroundColor: const Color(0xFFFFF1F2),
       ),
-      // Auth Wrapper
-      home: StreamBuilder(
-        stream: AuthService().authStateChanges,
-        builder: (context, snapshot) {
-          // If logged in
-          if (snapshot.hasData) {
-            return const RoleManager();
-          }
-          // If not logged in
-          return const LoginScreen();
-        },
-      ),
+      home: const AuthWrapper(),
     );
   }
 }
 
-class RoleManager extends StatelessWidget {
-  const RoleManager({super.key});
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Listen to the role stored in AuthService (fetched from Firestore)
-    return ValueListenableBuilder<UserRole>(
-      valueListenable: AuthService().roleNotifier,
-      builder: (context, role, _) {
-        if (role == UserRole.buyer) {
-          return const MainScreen();
-        } else {
-          return const SellerDashboardScreen();
+    // 1. Listen to Auth State (Logged In vs Out)
+    return StreamBuilder(
+      stream: AuthService().authStateChanges,
+      builder: (context, authSnapshot) {
+        if (!authSnapshot.hasData) {
+          return const LoginScreen();
         }
+
+        // 2. Listen to Role State (Buyer vs Seller vs None)
+        return ValueListenableBuilder<UserRole?>(
+          valueListenable: AuthService().roleNotifier,
+          builder: (context, role, _) {
+            if (role == null) {
+              // Logged in, but no role selected -> Show Selection Screen
+              return const RoleSelectionScreen();
+            } else if (role == UserRole.seller) {
+              return const SellerDashboard();
+            } else {
+              return const MainScreen(); // Existing Buyer Screen
+            }
+          },
+        );
       },
     );
   }
