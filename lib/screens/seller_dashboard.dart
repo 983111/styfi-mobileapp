@@ -1,76 +1,97 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/database_service.dart';
-import '../services/auth_service.dart';
 import '../models.dart';
+import 'profile_screen.dart';
 
-class SellerDashboard extends StatefulWidget {
-  const SellerDashboard({super.key});
+class SellerDashboardScreen extends StatefulWidget {
+  const SellerDashboardScreen({super.key});
 
   @override
-  State<SellerDashboard> createState() => _SellerDashboardState();
+  State<SellerDashboardScreen> createState() => _SellerDashboardScreenState();
 }
 
-class _SellerDashboardState extends State<SellerDashboard> {
-  int _index = 0;
-  
+class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
+  int _currentIndex = 0;
   final List<Widget> _screens = [
-    const SellerProductsTab(),
-    const SellerOrdersTab(),
-    const SellerProfileTab(),
+    const SellerProductsScreen(), 
+    const SellerOrdersScreen(),
+    const ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Seller Central"), automaticallyImplyLeading: false),
-      body: _screens[_index],
+      appBar: AppBar(
+        title: Text('Seller Central', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.white)),
+        backgroundColor: Colors.black87,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (index) => setState(() => _currentIndex = index),
+        backgroundColor: Colors.white,
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.inventory), label: 'Inventory'),
-          NavigationDestination(icon: Icon(Icons.list_alt), label: 'Orders'),
-          NavigationDestination(icon: Icon(Icons.person), label: 'Account'),
+          NavigationDestination(icon: Icon(Icons.inventory_2_outlined), label: 'Products'),
+          NavigationDestination(icon: Icon(Icons.local_shipping_outlined), label: 'Orders'),
+          NavigationDestination(icon: Icon(Icons.person_outline), label: 'Profile'),
         ],
       ),
     );
   }
 }
 
-// --- TAB 1: PRODUCTS ---
-class SellerProductsTab extends StatelessWidget {
-  const SellerProductsTab({super.key});
+// --- PRODUCTS TAB ---
+class SellerProductsScreen extends StatefulWidget {
+  const SellerProductsScreen({super.key});
+  @override
+  State<SellerProductsScreen> createState() => _SellerProductsScreenState();
+}
+
+class _SellerProductsScreenState extends State<SellerProductsScreen> {
+  void _showAddProductDialog(String uid) {
+    showDialog(context: context, builder: (context) => AddProductDialog(uid: uid));
+  }
 
   @override
   Widget build(BuildContext context) {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return const SizedBox();
 
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showDialog(context: context, builder: (_) => const AddProductDialog()),
-        label: const Text("Add Item"),
+        onPressed: () => _showAddProductDialog(user.uid),
+        label: const Text("Add Product"),
         icon: const Icon(Icons.add),
+        backgroundColor: Colors.black87,
+        foregroundColor: Colors.white,
       ),
       body: StreamBuilder<List<Product>>(
-        stream: DatabaseService().getSellerProducts(uid),
+        stream: DatabaseService().getSellerProducts(user.uid),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-          if (snapshot.data!.isEmpty) return const Center(child: Text("No items listed yet."));
-          
+          if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+          if (!snapshot.hasData || snapshot.data!.isEmpty) return const Center(child: Text("No products yet"));
+
           return ListView.builder(
+            padding: const EdgeInsets.all(16),
             itemCount: snapshot.data!.length,
             itemBuilder: (context, index) {
               final p = snapshot.data![index];
-              return ListTile(
-                leading: Image.network(p.image, width: 50, height: 50, fit: BoxFit.cover, errorBuilder: (_,__,___) => const Icon(Icons.error)),
-                title: Text(p.name),
-                subtitle: Text("\$${p.price.toStringAsFixed(2)}"),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => DatabaseService().deleteProduct(p.id),
+              return Card(
+                child: ListTile(
+                  leading: Image.network(p.image, width: 50, height: 50, fit: BoxFit.cover, 
+                    errorBuilder: (c,e,s) => const Icon(Icons.image_not_supported)),
+                  title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text("\$${p.price}"),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => DatabaseService().deleteProduct(p.id),
+                  ),
                 ),
               );
             },
@@ -81,54 +102,97 @@ class SellerProductsTab extends StatelessWidget {
   }
 }
 
-// --- TAB 2: ORDERS ---
-class SellerOrdersTab extends StatelessWidget {
-  const SellerOrdersTab({super.key});
+// --- ORDERS TAB (Fixed) ---
+class SellerOrdersScreen extends StatelessWidget {
+  const SellerOrdersScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-    return StreamBuilder<List<OrderModel>>(
-      stream: DatabaseService().getSellerOrders(uid),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-        if (snapshot.data!.isEmpty) return const Center(child: Text("No orders received yet."));
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return const Center(child: Text("Please login"));
 
-        return ListView.builder(
-          itemCount: snapshot.data!.length,
-          itemBuilder: (context, index) {
-            final o = snapshot.data![index];
-            return Card(
-              margin: const EdgeInsets.all(8),
-              child: ListTile(
-                // FIX: Access name via o.product.name
-                title: Text("Sold: ${o.product.name}"),
-                // FIX: Access price via o.product.price
-                subtitle: Text("Status: ${o.status}\nDate: ${o.date.toString().split(' ')[0]}"),
-                trailing: Text(
-                  "\$${o.product.price.toStringAsFixed(2)}", 
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green)
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      body: StreamBuilder<List<OrderModel>>(
+        stream: DatabaseService().getSellerOrders(user.uid),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+          
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text("No orders received yet"));
+          }
+
+          final orders = snapshot.data!;
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: orders.length,
+            itemBuilder: (context, index) {
+              final order = orders[index];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 16),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text("Order Date: ${order.date.toString().split(' ')[0]}", style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                          Chip(
+                            label: Text(order.status, style: const TextStyle(color: Colors.white, fontSize: 10)),
+                            backgroundColor: order.status == 'Delivered' ? Colors.green : Colors.orange,
+                            padding: EdgeInsets.zero,
+                          ),
+                        ],
+                      ),
+                      const Divider(),
+                      // Product Details
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Image.network(order.product.image, width: 50, height: 50, fit: BoxFit.cover, errorBuilder: (_,__,___)=>const Icon(Icons.error)),
+                        title: Text(order.product.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text("\$${order.product.price} • Qty: 1"),
+                      ),
+                      const SizedBox(height: 8),
+                      // Shipping Details (Address)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("Shipping To:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                            const SizedBox(height: 4),
+                            Text("${order.address.fullName}", style: const TextStyle(fontWeight: FontWeight.w600)),
+                            Text("${order.address.street}, ${order.address.city}", style: const TextStyle(fontSize: 13)),
+                            Text("Phone: ${order.address.phone}", style: const TextStyle(fontSize: 13)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // Actions
+                      Row(
+                        children: [
+                          const Text("Update Status: "),
+                          const SizedBox(width: 8),
+                          DropdownButton<String>(
+                            value: ['Processing', 'Shipped', 'Delivered', 'Cancelled'].contains(order.status) ? order.status : 'Processing',
+                            onChanged: (val) {
+                              if(val != null) DatabaseService().updateOrderStatus(order.id, val);
+                            },
+                            items: ['Processing', 'Shipped', 'Delivered', 'Cancelled'].map((e)=>DropdownMenuItem(value: e, child: Text(e))).toList(),
+                          )
+                        ],
+                      )
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-// --- TAB 3: PROFILE ---
-class SellerProfileTab extends StatelessWidget {
-  const SellerProfileTab({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: ElevatedButton.icon(
-        onPressed: () => AuthService().signOut(),
-        icon: const Icon(Icons.logout),
-        label: const Text("Log Out"),
-        style: ElevatedButton.styleFrom(foregroundColor: Colors.red),
+              );
+            },
+          );
+        },
       ),
     );
   }
@@ -136,66 +200,48 @@ class SellerProfileTab extends StatelessWidget {
 
 // --- ADD PRODUCT DIALOG ---
 class AddProductDialog extends StatefulWidget {
-  const AddProductDialog({super.key});
+  final String uid;
+  const AddProductDialog({super.key, required this.uid});
   @override
   State<AddProductDialog> createState() => _AddProductDialogState();
 }
 
 class _AddProductDialogState extends State<AddProductDialog> {
-  final _name = TextEditingController();
-  final _price = TextEditingController();
-  File? _image;
-  bool _loading = false;
+  final _name = TextEditingController(); final _price = TextEditingController(); final _cat = TextEditingController();
+  File? _file; bool _loading = false;
 
-  Future<void> _upload() async {
-    if (_name.text.isEmpty || _price.text.isEmpty || _image == null) return;
+  Future<void> _submit() async {
+    if (_name.text.isEmpty || _price.text.isEmpty || _file == null) return;
     setState(() => _loading = true);
     try {
-      final uid = FirebaseAuth.instance.currentUser!.uid;
-      // Using the folder 'products' for organization
-      final url = await DatabaseService().uploadImage(_image!, 'products');
-      
-      final product = Product(
-        id: '', 
-        name: _name.text, 
-        price: double.parse(_price.text), 
-        category: 'General', 
-        image: url, 
-        description: 'Seller Listing', 
-        sellerId: uid
-      );
-      
-      await DatabaseService().addProduct(product);
-      if (mounted) Navigator.pop(context);
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+      final url = await DatabaseService().uploadProductImage(_file!, widget.uid);
+      final prod = Product(id: '', name: _name.text, price: double.parse(_price.text), category: _cat.text, image: url, description: 'Seller Item', sellerId: widget.uid);
+      await DatabaseService().addProduct(prod);
+      if(mounted) Navigator.pop(context);
+    } catch(e) {
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+    } finally {
+      if(mounted) setState(() => _loading = false);
     }
-    setState(() => _loading = false);
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text("New Listing"),
+      title: const Text("New Product"),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           GestureDetector(
-            onTap: () async {
-              final x = await ImagePicker().pickImage(source: ImageSource.gallery);
-              if (x != null) setState(() => _image = File(x.path));
-            },
-            child: Container(
-              height: 100, width: 100, color: Colors.grey[200],
-              child: _image != null ? Image.file(_image!, fit: BoxFit.cover) : const Icon(Icons.add_a_photo),
-            ),
+            onTap: () async { final x = await ImagePicker().pickImage(source: ImageSource.gallery); if(x!=null) setState(()=>_file=File(x.path)); },
+            child: Container(height: 100, color: Colors.grey[200], child: _file != null ? Image.file(_file!) : const Icon(Icons.add_a_photo)),
           ),
-          TextField(controller: _name, decoration: const InputDecoration(labelText: "Product Name")),
+          TextField(controller: _name, decoration: const InputDecoration(labelText: "Name")),
           TextField(controller: _price, decoration: const InputDecoration(labelText: "Price"), keyboardType: TextInputType.number),
         ],
       ),
       actions: [
-        if (_loading) const CircularProgressIndicator() else ElevatedButton(onPressed: _upload, child: const Text("List It"))
+        if(_loading) const CircularProgressIndicator() else ElevatedButton(onPressed: _submit, child: const Text("Upload"))
       ],
     );
   }
