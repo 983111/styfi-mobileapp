@@ -1,98 +1,76 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/database_service.dart';
+import '../services/auth_service.dart';
 import '../models.dart';
-import 'profile_screen.dart';
 
-class SellerDashboardScreen extends StatefulWidget {
-  const SellerDashboardScreen({super.key});
+class SellerDashboard extends StatefulWidget {
+  const SellerDashboard({super.key});
 
   @override
-  State<SellerDashboardScreen> createState() => _SellerDashboardScreenState();
+  State<SellerDashboard> createState() => _SellerDashboardState();
 }
 
-class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
-  int _currentIndex = 0;
+class _SellerDashboardState extends State<SellerDashboard> {
+  int _index = 0;
+  
   final List<Widget> _screens = [
-    const SellerProductsScreen(), // Actual Products Screen
-    const SellerOrdersScreen(),   // Actual Orders Screen
-    const ProfileScreen(),
+    const SellerProductsTab(),
+    const SellerOrdersTab(),
+    const SellerProfileTab(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Seller Central', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.white)),
-        backgroundColor: Colors.black87,
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      body: IndexedStack(index: _currentIndex, children: _screens),
+      appBar: AppBar(title: const Text("Seller Central"), automaticallyImplyLeading: false),
+      body: _screens[_index],
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) => setState(() => _currentIndex = index),
-        backgroundColor: Colors.white,
+        selectedIndex: _index,
+        onDestinationSelected: (i) => setState(() => _index = i),
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.inventory_2_outlined), label: 'Products'),
-          NavigationDestination(icon: Icon(Icons.local_shipping_outlined), label: 'Orders'),
-          NavigationDestination(icon: Icon(Icons.person_outline), label: 'Profile'),
+          NavigationDestination(icon: Icon(Icons.inventory), label: 'Inventory'),
+          NavigationDestination(icon: Icon(Icons.list_alt), label: 'Orders'),
+          NavigationDestination(icon: Icon(Icons.person), label: 'Account'),
         ],
       ),
     );
   }
 }
 
-// --- PRODUCT UPLOAD & LIST SCREEN ---
-class SellerProductsScreen extends StatefulWidget {
-  const SellerProductsScreen({super.key});
-  @override
-  State<SellerProductsScreen> createState() => _SellerProductsScreenState();
-}
-
-class _SellerProductsScreenState extends State<SellerProductsScreen> {
-  void _showAddProductDialog(String uid) {
-    showDialog(context: context, builder: (context) => AddProductDialog(uid: uid));
-  }
+// --- TAB 1: PRODUCTS ---
+class SellerProductsTab extends StatelessWidget {
+  const SellerProductsTab({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return const SizedBox();
+    final uid = FirebaseAuth.instance.currentUser!.uid;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddProductDialog(user.uid),
-        label: const Text("Add Product"),
+        onPressed: () => showDialog(context: context, builder: (_) => const AddProductDialog()),
+        label: const Text("Add Item"),
         icon: const Icon(Icons.add),
-        backgroundColor: Colors.black87,
-        foregroundColor: Colors.white,
       ),
       body: StreamBuilder<List<Product>>(
-        stream: DatabaseService().getSellerProducts(user.uid),
+        stream: DatabaseService().getSellerProducts(uid),
         builder: (context, snapshot) {
           if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-          final products = snapshot.data!;
-          if (products.isEmpty) return const Center(child: Text("No products yet"));
-
+          if (snapshot.data!.isEmpty) return const Center(child: Text("No items listed yet."));
+          
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: products.length,
+            itemCount: snapshot.data!.length,
             itemBuilder: (context, index) {
-              final p = products[index];
-              return Card(
-                child: ListTile(
-                  leading: Image.network(p.image, width: 50, height: 50, fit: BoxFit.cover, 
-                    errorBuilder: (c,e,s) => const Icon(Icons.image_not_supported)),
-                  title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text("\$${p.price}"),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => DatabaseService().deleteProduct(p.id),
-                  ),
+              final p = snapshot.data![index];
+              return ListTile(
+                leading: Image.network(p.image, width: 50, height: 50, fit: BoxFit.cover, errorBuilder: (_,__,___) => const Icon(Icons.error)),
+                title: Text(p.name),
+                subtitle: Text("\$${p.price.toStringAsFixed(2)}"),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () => DatabaseService().deleteProduct(p.id),
                 ),
               );
             },
@@ -103,91 +81,122 @@ class _SellerProductsScreenState extends State<SellerProductsScreen> {
   }
 }
 
-// --- DIALOG TO PICK IMAGE AND UPLOAD ---
-class AddProductDialog extends StatefulWidget {
-  final String uid;
-  const AddProductDialog({super.key, required this.uid});
+// --- TAB 2: ORDERS ---
+class SellerOrdersTab extends StatelessWidget {
+  const SellerOrdersTab({super.key});
 
+  @override
+  Widget build(BuildContext context) {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    return StreamBuilder<List<OrderModel>>(
+      stream: DatabaseService().getSellerOrders(uid),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        if (snapshot.data!.isEmpty) return const Center(child: Text("No orders received yet."));
+
+        return ListView.builder(
+          itemCount: snapshot.data!.length,
+          itemBuilder: (context, index) {
+            final o = snapshot.data![index];
+            return Card(
+              margin: const EdgeInsets.all(8),
+              child: ListTile(
+                // FIX: Access name via o.product.name
+                title: Text("Sold: ${o.product.name}"),
+                // FIX: Access price via o.product.price
+                subtitle: Text("Status: ${o.status}\nDate: ${o.date.toString().split(' ')[0]}"),
+                trailing: Text(
+                  "\$${o.product.price.toStringAsFixed(2)}", 
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green)
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+// --- TAB 3: PROFILE ---
+class SellerProfileTab extends StatelessWidget {
+  const SellerProfileTab({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ElevatedButton.icon(
+        onPressed: () => AuthService().signOut(),
+        icon: const Icon(Icons.logout),
+        label: const Text("Log Out"),
+        style: ElevatedButton.styleFrom(foregroundColor: Colors.red),
+      ),
+    );
+  }
+}
+
+// --- ADD PRODUCT DIALOG ---
+class AddProductDialog extends StatefulWidget {
+  const AddProductDialog({super.key});
   @override
   State<AddProductDialog> createState() => _AddProductDialogState();
 }
 
 class _AddProductDialogState extends State<AddProductDialog> {
-  final _nameCtrl = TextEditingController();
-  final _priceCtrl = TextEditingController();
-  final _catCtrl = TextEditingController();
-  File? _imageFile;
-  bool _uploading = false;
+  final _name = TextEditingController();
+  final _price = TextEditingController();
+  File? _image;
+  bool _loading = false;
 
-  Future<void> _pickImage() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (picked != null) setState(() => _imageFile = File(picked.path));
-  }
-
-  Future<void> _submit() async {
-    if (_nameCtrl.text.isEmpty || _priceCtrl.text.isEmpty || _imageFile == null) return;
-    
-    setState(() => _uploading = true);
+  Future<void> _upload() async {
+    if (_name.text.isEmpty || _price.text.isEmpty || _image == null) return;
+    setState(() => _loading = true);
     try {
-      // 1. UPLOAD IMAGE (Now uses Supabase via DatabaseService)
-      final imageUrl = await DatabaseService().uploadProductImage(_imageFile!, widget.uid);
+      final uid = FirebaseAuth.instance.currentUser!.uid;
+      // Using the folder 'products' for organization
+      final url = await DatabaseService().uploadImage(_image!, 'products');
       
-      // 2. SAVE DATA
-      final newProduct = Product(
-        id: '',
-        name: _nameCtrl.text,
-        price: double.tryParse(_priceCtrl.text) ?? 0.0,
-        category: _catCtrl.text.isEmpty ? 'General' : _catCtrl.text,
-        image: imageUrl,
-        description: 'Seller Upload',
-        sellerId: widget.uid,
+      final product = Product(
+        id: '', 
+        name: _name.text, 
+        price: double.parse(_price.text), 
+        category: 'General', 
+        image: url, 
+        description: 'Seller Listing', 
+        sellerId: uid
       );
-      await DatabaseService().addProduct(newProduct);
+      
+      await DatabaseService().addProduct(product);
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
-    } finally {
-      if (mounted) setState(() => _uploading = false);
     }
+    setState(() => _loading = false);
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text("List New Item"),
-      content: SingleChildScrollView(
-        child: Column(
-          children: [
-            GestureDetector(
-              onTap: _pickImage,
-              child: Container(
-                height: 150, width: double.infinity,
-                color: Colors.grey[200],
-                child: _imageFile != null 
-                  ? Image.file(_imageFile!, fit: BoxFit.cover) 
-                  : const Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.add_a_photo, size: 40), Text("Tap to upload")]),
-              ),
+      title: const Text("New Listing"),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GestureDetector(
+            onTap: () async {
+              final x = await ImagePicker().pickImage(source: ImageSource.gallery);
+              if (x != null) setState(() => _image = File(x.path));
+            },
+            child: Container(
+              height: 100, width: 100, color: Colors.grey[200],
+              child: _image != null ? Image.file(_image!, fit: BoxFit.cover) : const Icon(Icons.add_a_photo),
             ),
-            const SizedBox(height: 10),
-            TextField(controller: _nameCtrl, decoration: const InputDecoration(labelText: "Name")),
-            TextField(controller: _priceCtrl, decoration: const InputDecoration(labelText: "Price"), keyboardType: TextInputType.number),
-            TextField(controller: _catCtrl, decoration: const InputDecoration(labelText: "Category")),
-          ],
-        ),
+          ),
+          TextField(controller: _name, decoration: const InputDecoration(labelText: "Product Name")),
+          TextField(controller: _price, decoration: const InputDecoration(labelText: "Price"), keyboardType: TextInputType.number),
+        ],
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-        ElevatedButton(onPressed: _uploading ? null : _submit, child: _uploading ? const CircularProgressIndicator() : const Text("Upload")),
+        if (_loading) const CircularProgressIndicator() else ElevatedButton(onPressed: _upload, child: const Text("List It"))
       ],
     );
-  }
-}
-
-// --- PLACEHOLDER ORDERS SCREEN ---
-class SellerOrdersScreen extends StatelessWidget {
-  const SellerOrdersScreen({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text("Orders will appear here"));
   }
 }
