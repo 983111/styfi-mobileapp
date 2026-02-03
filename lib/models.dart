@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+// --- ENUMS ---
 enum UserRole { buyer, seller }
 
+// --- USER MODEL ---
 class AppUser {
   final String uid;
   final String email;
@@ -25,6 +27,7 @@ class AppUser {
   }
 }
 
+// --- PRODUCT MODEL ---
 class Product {
   final String id;
   final String name;
@@ -69,6 +72,7 @@ class Product {
   }
 }
 
+// --- ADDRESS MODEL (Restored) ---
 class Address {
   final String fullName;
   final String street;
@@ -76,17 +80,32 @@ class Address {
   final String zip;
   final String phone;
 
-  Address({required this.fullName, required this.street, required this.city, required this.zip, required this.phone});
+  Address({
+    required this.fullName, 
+    required this.street, 
+    required this.city, 
+    required this.zip, 
+    required this.phone
+  });
 
   Map<String, dynamic> toMap() => {
-    'fullName': fullName, 'street': street, 'city': city, 'zip': zip, 'phone': phone
+    'fullName': fullName, 
+    'street': street, 
+    'city': city, 
+    'zip': zip, 
+    'phone': phone
   };
 
   factory Address.fromMap(Map<String, dynamic> map) => Address(
-    fullName: map['fullName'] ?? '', street: map['street'] ?? '', city: map['city'] ?? '', zip: map['zip'] ?? '', phone: map['phone'] ?? ''
+    fullName: map['fullName'] ?? '', 
+    street: map['street'] ?? '', 
+    city: map['city'] ?? '', 
+    zip: map['zip'] ?? '', 
+    phone: map['phone'] ?? ''
   );
 }
 
+// --- ORDER MODEL (Restored full structure) ---
 class OrderModel {
   final String id;
   final String buyerId;
@@ -133,6 +152,8 @@ class OrderModel {
     );
   }
 }
+
+// --- AI & FEATURE MODELS (Restored) ---
 
 class OutfitSuggestion {
   final String name; 
