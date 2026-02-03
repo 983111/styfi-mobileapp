@@ -1,17 +1,20 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // Import Supabase
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models.dart';
 
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final SupabaseClient _supabase = Supabase.instance.client; // Supabase Client
+  final SupabaseClient _supabase = Supabase.instance.client;
 
-  // --- Products ---
+  // --- PRODUCTS ---
+  
+  // Renamed back to 'getProducts' to match existing screens
   Stream<List<Product>> getProducts() {
     return _db.collection('products')
         .orderBy('createdAt', descending: true)
-        .snapshots().map((snapshot) {
+        .snapshots()
+        .map((snapshot) {
       return snapshot.docs.map((doc) => Product.fromMap(doc.data(), doc.id)).toList();
     });
   }
@@ -25,31 +28,6 @@ class DatabaseService {
     });
   }
 
-  // --- Image Upload Function (Switched to Supabase) ---
-  Future<String> uploadProductImage(File imageFile, String uid) async {
-    try {
-      // 1. Generate unique path: products/{uid}/{timestamp}.jpg
-      final String fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final String path = '$uid/$fileName';
-
-      // 2. Upload to Supabase Storage (Bucket name: 'products')
-      // Make sure you create a bucket named 'products' in your Supabase dashboard and make it Public.
-      await _supabase.storage.from('products').upload(
-        path,
-        imageFile,
-        fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
-      );
-
-      // 3. Get Public URL
-      final String imageUrl = _supabase.storage.from('products').getPublicUrl(path);
-      
-      return imageUrl;
-    } catch (e) {
-      print("Upload Error: $e");
-      throw Exception("Image upload failed: $e");
-    }
-  }
-
   Future<void> addProduct(Product product) async {
     await _db.collection('products').add(product.toMap());
   }
@@ -58,7 +36,48 @@ class DatabaseService {
     await _db.collection('products').doc(productId).delete();
   }
 
-  // --- Orders Logic ---
+  // --- IMAGES (Supabase) ---
+  Future<String> uploadImage(File imageFile, String folder) async {
+    // FIX: Define variables outside the try block so they are visible in catch
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final path = '$folder/$fileName';
+
+    try {
+      // Attempt upload
+      await _supabase.storage.from('products').upload(
+        path, 
+        imageFile,
+        fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
+      );
+      
+      return _supabase.storage.from('products').getPublicUrl(path);
+
+    } catch (e) {
+      // If bucket is missing, try to create it
+      if (e.toString().contains('not found') || e.toString().contains('404')) {
+         print("Bucket not found, attempting to create...");
+         try {
+           await _supabase.storage.createBucket('products', const BucketOptions(public: true));
+           
+           // Retry upload using the same 'path' variable
+           await _supabase.storage.from('products').upload(
+             path, 
+             imageFile,
+             fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
+           );
+           
+           return _supabase.storage.from('products').getPublicUrl(path);
+         } catch (createErr) {
+           throw Exception("Failed to create bucket or upload: $createErr");
+         }
+      }
+      rethrow;
+    }
+  }
+
+  // --- ORDERS ---
+
+  // Restored 'placeFullOrder' to match Checkout Screen
   Future<void> placeFullOrder(String buyerId, Product product, Address address, String paymentMethod) async {
     final order = OrderModel(
       id: '',
@@ -67,7 +86,7 @@ class DatabaseService {
       product: product,
       address: address,
       paymentMethod: paymentMethod,
-      status: 'Processing',
+      status: 'Ordered',
       date: DateTime.now(),
     );
     await _db.collection('orders').add(order.toMap());
@@ -78,12 +97,6 @@ class DatabaseService {
         .where('sellerId', isEqualTo: sellerId)
         .orderBy('date', descending: true)
         .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) => OrderModel.fromMap(doc.data(), doc.id)).toList();
-    });
-  }
-
-  Future<void> updateOrderStatus(String orderId, String newStatus) async {
-    await _db.collection('orders').doc(orderId).update({'status': newStatus});
+        .map((snapshot) => snapshot.docs.map((doc) => OrderModel.fromMap(doc.data(), doc.id)).toList());
   }
 }
