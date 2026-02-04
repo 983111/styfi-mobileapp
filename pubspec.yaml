@@ -10,28 +10,29 @@ dependencies:
   flutter:
     sdk: flutter
   
-  # Firebase (Auth & Database)
-  firebase_core: ^4.4.0
-  firebase_auth: ^6.1.4
-  cloud_firestore: ^6.1.2
+  # Firebase (Auth, Database, Storage)
+  firebase_core: ^3.10.1
+  firebase_auth: ^5.4.1
+  cloud_firestore: ^5.6.2
+  firebase_storage: ^12.4.1 # Added missing package
   
-  # Supabase (For Image Storage)
+  # Supabase (Optional - kept if you use it, but Firebase Storage is main now)
   supabase_flutter: ^2.8.0 
   
   http: ^1.2.0
   image_picker: ^1.0.7
   cached_network_image: ^3.4.1
-  google_fonts: ^8.0.0
-  flutter_launcher_icons: ^0.14.4
+  google_fonts: ^6.1.0
+  flutter_launcher_icons: ^0.14.3
   
-  # REPLACED image_gallery_saver with gal
+  # Gallery Saver (Modern replacement)
   gal: ^2.3.0
   permission_handler: ^11.3.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^6.0.0
+  flutter_lints: ^3.0.0
 
 flutter:
   uses-material-design: true
