@@ -6,6 +6,9 @@ import 'package:image_picker/image_picker.dart';
 import '../services/database_service.dart';
 import '../models.dart';
 import 'profile_screen.dart';
+// Import the features moved from User Panel
+import 'virtual_try_on_screen.dart';
+import 'image_enhancer_screen.dart';
 
 class SellerDashboardScreen extends StatefulWidget {
   const SellerDashboardScreen({super.key});
@@ -16,9 +19,13 @@ class SellerDashboardScreen extends StatefulWidget {
 
 class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
   int _currentIndex = 0;
+  
+  // Added Virtual Try-On and Image Enhancer to Seller screens
   final List<Widget> _screens = [
     const SellerProductsScreen(), 
     const SellerOrdersScreen(),
+    const VirtualTryOnScreen(),
+    const ImageEnhancerScreen(),
     const ProfileScreen(),
   ];
 
@@ -38,6 +45,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.inventory_2_outlined), label: 'Products'),
           NavigationDestination(icon: Icon(Icons.local_shipping_outlined), label: 'Orders'),
+          NavigationDestination(icon: Icon(Icons.camera_alt_outlined), label: 'Try-On'),
+          NavigationDestination(icon: Icon(Icons.camera_enhance_outlined), label: 'Studio'),
           NavigationDestination(icon: Icon(Icons.person_outline), label: 'Profile'),
         ],
       ),
@@ -102,7 +111,7 @@ class _SellerProductsScreenState extends State<SellerProductsScreen> {
   }
 }
 
-// --- ORDERS TAB (Fixed) ---
+// --- ORDERS TAB ---
 class SellerOrdersScreen extends StatelessWidget {
   const SellerOrdersScreen({super.key});
 
@@ -135,7 +144,6 @@ class SellerOrdersScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -148,7 +156,6 @@ class SellerOrdersScreen extends StatelessWidget {
                         ],
                       ),
                       const Divider(),
-                      // Product Details
                       ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: Image.network(order.product.image, width: 50, height: 50, fit: BoxFit.cover, errorBuilder: (_,__,___)=>const Icon(Icons.error)),
@@ -156,7 +163,6 @@ class SellerOrdersScreen extends StatelessWidget {
                         subtitle: Text("\$${order.product.price} • Qty: 1"),
                       ),
                       const SizedBox(height: 8),
-                      // Shipping Details (Address)
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
@@ -172,7 +178,6 @@ class SellerOrdersScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      // Actions
                       Row(
                         children: [
                           const Text("Update Status: "),
