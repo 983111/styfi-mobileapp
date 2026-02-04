@@ -1,105 +1,106 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; 
+import 'package:firebase_storage/firebase_storage.dart';
 import '../models.dart';
 
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final SupabaseClient _supabase = Supabase.instance.client;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  // --- Products ---
+  // --- MARKETPLACE & PRODUCTS ---
+
+  // 1. Get ALL products (For Marketplace Screen)
   Stream<List<Product>> getProducts() {
     return _db.collection('products')
-        .orderBy('createdAt', descending: true)
-        .snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) => Product.fromMap(doc.data(), doc.id)).toList();
-    });
+        .orderBy('price', descending: false) // Optional sorting
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Product.fromMap(doc.data(), doc.id))
+            .toList());
   }
 
+  // 2. Get Seller's Products (For Seller Dashboard)
   Stream<List<Product>> getSellerProducts(String sellerId) {
     return _db.collection('products')
         .where('sellerId', isEqualTo: sellerId)
         .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) => Product.fromMap(doc.data(), doc.id)).toList();
-    });
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Product.fromMap(doc.data(), doc.id))
+            .toList());
   }
 
-  // --- Image Upload ---
-  Future<String> uploadProductImage(File imageFile, String uid) async {
-    // FIX: Define variables OUTSIDE the try block so they are accessible in catch
-    final String fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-    final String path = '$uid/$fileName';
-
-    try {
-      await _supabase.storage.from('products').upload(
-        path,
-        imageFile,
-        fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
-      );
-
-      return _supabase.storage.from('products').getPublicUrl(path);
-    } catch (e) {
-      // Recovery for missing bucket
-      if (e.toString().contains('not found') || e.toString().contains('404')) {
-         try {
-           await _supabase.storage.createBucket('products', const BucketOptions(public: true));
-           // Now 'path' is accessible here because we defined it outside
-           await _supabase.storage.from('products').upload(path, imageFile);
-           return _supabase.storage.from('products').getPublicUrl(path);
-         } catch (_) { throw e; }
-      }
-      throw Exception("Image upload failed: $e");
-    }
-  }
-
+  // 3. Add a new Product
   Future<void> addProduct(Product product) async {
     await _db.collection('products').add(product.toMap());
   }
 
+  // 4. Delete a Product
   Future<void> deleteProduct(String productId) async {
     await _db.collection('products').doc(productId).delete();
   }
 
-  // --- Orders Logic ---
-  
-  // 1. Place Order
+  // 5. Upload Product Image to Firebase Storage
+  Future<String> uploadProductImage(File file, String userId) async {
+    // Create a unique path for the image
+    final ref = _storage.ref().child('products/$userId/${DateTime.now().millisecondsSinceEpoch}.jpg');
+    
+    // Upload the file
+    await ref.putFile(file);
+    
+    // Get the download URL
+    return await ref.getDownloadURL();
+  }
+
+  // --- ORDERS & CHECKOUT ---
+
+  // 6. Place a Full Order (For Checkout Screen)
   Future<void> placeFullOrder(String buyerId, Product product, Address address, String paymentMethod) async {
+    final orderId = DateTime.now().millisecondsSinceEpoch.toString();
+    
     final order = OrderModel(
-      id: '',
+      id: orderId,
       buyerId: buyerId,
       sellerId: product.sellerId,
       product: product,
       address: address,
-      paymentMethod: paymentMethod,
+      paymentMethod: paymentMethod, // <--- ADDED THIS LINE (Fixes the error)
       status: 'Processing',
       date: DateTime.now(),
     );
-    await _db.collection('orders').add(order.toMap());
+
+    // Save to Firestore
+    await _db.collection('orders').doc(orderId).set(order.toMap());
   }
 
-  // 2. Get Seller Orders
-  Stream<List<OrderModel>> getSellerOrders(String sellerId) {
+  // 7. Get User's Orders (For Buyer Profile)
+  Stream<List<OrderModel>> getUserOrders(String uid) {
     return _db.collection('orders')
-        .where('sellerId', isEqualTo: sellerId)
-        .orderBy('date', descending: true)
+        .where('buyerId', isEqualTo: uid)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => OrderModel.fromMap(doc.data(), doc.id)).toList();
-    });
+          final orders = snapshot.docs
+              .map((doc) => OrderModel.fromMap(doc.data(), doc.id))
+              .toList();
+          orders.sort((a, b) => b.date.compareTo(a.date)); // Sort by date desc
+          return orders;
+        });
   }
 
-  // 3. Get Buyer Orders
-  Stream<List<OrderModel>> getBuyerOrders(String buyerId) {
+  // 8. Get Seller's Incoming Orders (For Seller Dashboard)
+  Stream<List<OrderModel>> getSellerOrders(String uid) {
     return _db.collection('orders')
-        .where('buyerId', isEqualTo: buyerId)
-        .orderBy('date', descending: true)
+        .where('sellerId', isEqualTo: uid)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => OrderModel.fromMap(doc.data(), doc.id)).toList();
-    });
+          final orders = snapshot.docs
+              .map((doc) => OrderModel.fromMap(doc.data(), doc.id))
+              .toList();
+          orders.sort((a, b) => b.date.compareTo(a.date));
+          return orders;
+        });
   }
 
+  // 9. Update Order Status
   Future<void> updateOrderStatus(String orderId, String newStatus) async {
     await _db.collection('orders').doc(orderId).update({'status': newStatus});
   }
