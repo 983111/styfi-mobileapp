@@ -4,6 +4,7 @@ import 'marketplace_screen.dart';
 import 'outfit_composer_screen.dart';
 import 'trend_detector_screen.dart';
 import 'profile_screen.dart'; 
+import 'virtual_try_on_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -15,11 +16,11 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  // Removed VirtualTryOnScreen and ImageEnhancerScreen
   final List<Widget> _screens = [
     const MarketplaceScreen(),
     const OutfitComposerScreen(),
     const TrendDetectorScreen(),
+    const VirtualTryOnScreen(),
     const ProfileScreen(), 
   ];
 
@@ -51,6 +52,7 @@ class _MainScreenState extends State<MainScreen> {
           NavigationDestination(icon: Icon(Icons.shopping_bag_outlined), label: 'Shop'),
           NavigationDestination(icon: Icon(Icons.auto_awesome), label: 'Outfit'),
           NavigationDestination(icon: Icon(Icons.trending_up), label: 'Trends'),
+          NavigationDestination(icon: Icon(Icons.camera_alt_outlined), label: 'Try-On'),
           NavigationDestination(icon: Icon(Icons.person_outline), label: 'Profile'),
         ],
       ),
