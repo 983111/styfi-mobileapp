@@ -15,10 +15,16 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   Future<void> _handleRoleSelection(UserRole role) async {
     setState(() => _isLoading = true);
     try {
-      // Attempt to save the role to the database
+      // 1. Save the role to database and local state
       await AuthService().setUserRole(role);
-      // NOTE: We don't need to navigate manually. 
-      // The AuthWrapper in main.dart listens to the change and will move us automatically.
+      
+      if (mounted) {
+        // 2. FORCE NAVIGATION:
+        // Clear the navigation stack (remove this screen and Profile screen)
+        // so we go back to the root (RoleManager in main.dart).
+        // RoleManager will see the new role and show the correct Dashboard.
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -37,6 +43,15 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        // Add a back button in case they change their mind
+        leading: IconButton(
+          icon: const Icon(Icons.close), 
+          onPressed: () => Navigator.pop(context),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
       body: SafeArea(
         child: _isLoading 
         ? const Center(child: CircularProgressIndicator()) 
