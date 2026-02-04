@@ -12,6 +12,8 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
+    // Get the current role to decide what text to show (optional, but nice)
+    final isSeller = AuthService().currentRole == UserRole.seller;
 
     if (user == null) {
       return const Scaffold(body: Center(child: Text("Please Log In")));
@@ -25,14 +27,9 @@ class ProfileScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
+              // FIX: Just sign out. main.dart listening to authStateChanges 
+              // will automatically switch us to the LoginScreen.
               await AuthService().signOut();
-              if (context.mounted) {
-                 Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
-                  (route) => false,
-                );
-              }
             },
           )
         ],
@@ -70,6 +67,39 @@ class ProfileScreen extends StatelessWidget {
                 ],
               ),
             ),
+            
+            const SizedBox(height: 16),
+            
+            // FIX: Added "Switch Role" Button
+            // This allows switching only when logged in, preventing the bug.
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+              ),
+              child: ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8)
+                  ),
+                  child: Icon(Icons.swap_horiz, color: Colors.blue[700]),
+                ),
+                title: Text(isSeller ? "Switch to Buying" : "Switch to Selling"),
+                subtitle: const Text("Change your account mode"),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                onTap: () {
+                  // Navigate to Role Selection while still authenticated
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(builder: (_) => const RoleSelectionScreen())
+                  );
+                },
+              ),
+            ),
+
             const SizedBox(height: 24),
             
             Text("My Orders", style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold)),
