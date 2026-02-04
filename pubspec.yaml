@@ -23,6 +23,10 @@ dependencies:
   cached_network_image: ^3.4.1
   google_fonts: ^8.0.0
   flutter_launcher_icons: ^0.14.4
+  
+  # REPLACED image_gallery_saver with gal
+  gal: ^2.3.0
+  permission_handler: ^11.3.1
 
 dev_dependencies:
   flutter_test:
