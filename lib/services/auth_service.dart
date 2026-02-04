@@ -13,6 +13,7 @@ class AuthService {
 
   final ValueNotifier<UserRole> roleNotifier = ValueNotifier(UserRole.buyer);
   
+  // FIX: Added this getter so ProfileScreen can access it
   UserRole get currentRole => roleNotifier.value;
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();
@@ -33,11 +34,7 @@ class AuthService {
     });
   }
 
-  // Helper method to set role (Called by RoleSelectionScreen)
-  Future<void> setUserRole(UserRole role) async {
-    await switchRole(role);
-  }
-
+  // FIX: Added switching methods
   Future<void> switchToSeller() async {
     await switchRole(UserRole.seller);
   }
@@ -49,12 +46,9 @@ class AuthService {
   Future<void> switchRole(UserRole newRole) async {
     final user = _auth.currentUser;
     if (user != null) {
-      // Update Firestore
       await _db.collection('users').doc(user.uid).set({
         'role': newRole == UserRole.seller ? 'seller' : 'buyer'
       }, SetOptions(merge: true));
-      
-      // Update local state
       roleNotifier.value = newRole;
     }
   }
@@ -67,7 +61,7 @@ class AuthService {
       );
       await _db.collection('users').doc(result.user!.uid).set({
         'email': email,
-        'role': 'buyer', // Default role
+        'role': 'buyer',
         'createdAt': FieldValue.serverTimestamp(),
       });
       return null;

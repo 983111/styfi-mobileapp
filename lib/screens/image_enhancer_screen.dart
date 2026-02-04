@@ -1,7 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'package:gal/gal.dart'; // CHANGED: Import gal
+import 'package:permission_handler/permission_handler.dart';
 import '../models.dart';
 import '../services/api_service.dart';
 
@@ -37,6 +41,42 @@ class _ImageEnhancerScreenState extends State<ImageEnhancerScreen> {
       _result = res;
       _loading = false;
     });
+  }
+
+  Future<void> _downloadImage(String path, bool isUrl) async {
+    // Gal handles permissions internally for newer Android versions,
+    // but explicit request is safer for older ones.
+    if (Platform.isAndroid) {
+       await Permission.storage.request();
+       await Permission.photos.request();
+    }
+
+    try {
+      // 1. Get the bytes
+      Uint8List bytes;
+      if (isUrl) {
+        final response = await http.get(Uri.parse(path));
+        bytes = response.bodyBytes;
+      } else {
+        bytes = base64Decode(path);
+      }
+
+      // 2. Save using Gal
+      // It automatically saves to the gallery without needing complex configuration
+      await Gal.putImageBytes(bytes);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Image saved to Gallery!")),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error saving: $e")),
+        );
+      }
+    }
   }
 
   @override
@@ -85,19 +125,50 @@ class _ImageEnhancerScreenState extends State<ImageEnhancerScreen> {
           ),
           const SizedBox(height: 24),
           if (_result != null)
-             _result!.type == 'image'
-                ? Column(children: [
-                    const Text("Enhanced Result:", style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.memory(base64Decode(_result!.data)))
-                  ])
-                : Container(
-                    padding: const EdgeInsets.all(16),
-                    color: Colors.white,
-                    child: Text(_result!.data),
-                  )
+            Column(
+              children: [
+                const Text("Enhanced Result:", style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                _buildResultDisplay(),
+                const SizedBox(height: 16),
+                 if (_result!.type == 'image' || _result!.type == 'url')
+                  ElevatedButton.icon(
+                    onPressed: () => _downloadImage(_result!.data, _result!.type == 'url'),
+                    icon: const Icon(Icons.download),
+                    label: const Text("Download Enhanced Image"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+              ],
+            )
         ],
       ),
     );
+  }
+
+  Widget _buildResultDisplay() {
+    if (_result!.type == 'url') {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.network(
+          _result!.data,
+          loadingBuilder: (c, child, progress) => progress == null ? child : const CircularProgressIndicator(),
+          errorBuilder: (c,e,s) => const Text("Failed to load image"),
+        ),
+      );
+    } else if (_result!.type == 'image') {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.memory(base64Decode(_result!.data))
+      );
+    } else {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        color: Colors.white,
+        child: Text(_result!.data),
+      );
+    }
   }
 }

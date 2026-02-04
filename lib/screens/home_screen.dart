@@ -3,8 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'marketplace_screen.dart';
 import 'outfit_composer_screen.dart';
 import 'trend_detector_screen.dart';
+import 'profile_screen.dart'; 
 import 'virtual_try_on_screen.dart';
-import 'image_enhancer_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -21,7 +21,7 @@ class _MainScreenState extends State<MainScreen> {
     const OutfitComposerScreen(),
     const TrendDetectorScreen(),
     const VirtualTryOnScreen(),
-    const ImageEnhancerScreen(),
+    const ProfileScreen(), 
   ];
 
   @override
@@ -53,7 +53,7 @@ class _MainScreenState extends State<MainScreen> {
           NavigationDestination(icon: Icon(Icons.auto_awesome), label: 'Outfit'),
           NavigationDestination(icon: Icon(Icons.trending_up), label: 'Trends'),
           NavigationDestination(icon: Icon(Icons.camera_alt_outlined), label: 'Try-On'),
-          NavigationDestination(icon: Icon(Icons.camera_enhance_outlined), label: 'Studio'),
+          NavigationDestination(icon: Icon(Icons.person_outline), label: 'Profile'),
         ],
       ),
     );
