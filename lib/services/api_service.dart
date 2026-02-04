@@ -93,11 +93,14 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        // Correctly handle the response format from your worker.js
+        if (data['success'] == true && data['enhancedImage'] != null) {
+          return AiResult(type: 'url', data: data['enhancedImage']);
+        }
+        // Fallback for previous logic if needed
         if (data['method'] == 'imagen' && data['imageData'] != null) {
           return AiResult(type: 'image', data: data['imageData']);
-        } else if (data['method'] == 'guide' && data['enhancementGuide'] != null) {
-          return AiResult(type: 'guide', data: data['enhancementGuide']);
-        }
+        } 
       }
     } catch (e) {
       print("Error enhancing image: $e");
@@ -125,6 +128,11 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        // Handle direct guide response from worker.js
+        if (data['visualizationGuide'] != null) {
+             return AiResult(type: 'guide', data: data['visualizationGuide']);
+        }
+        
         if (data['method'] == 'imagen' && data['imageData'] != null) {
           return AiResult(type: 'image', data: data['imageData']);
         } else if (data['method'] == 'guide' && data['visualizationGuide'] != null) {
