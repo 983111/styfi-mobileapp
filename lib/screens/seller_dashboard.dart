@@ -6,8 +6,6 @@ import 'package:image_picker/image_picker.dart';
 import '../services/database_service.dart';
 import '../models.dart';
 import 'profile_screen.dart';
-// Import the features moved from User Panel
-import 'virtual_try_on_screen.dart';
 import 'image_enhancer_screen.dart';
 
 class SellerDashboardScreen extends StatefulWidget {
@@ -20,12 +18,10 @@ class SellerDashboardScreen extends StatefulWidget {
 class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
   int _currentIndex = 0;
   
-  // Added Virtual Try-On and Image Enhancer to Seller screens
   final List<Widget> _screens = [
     const SellerProductsScreen(), 
     const SellerOrdersScreen(),
-    const VirtualTryOnScreen(),
-    const ImageEnhancerScreen(),
+    const ImageEnhancerScreen(), // Kept Studio/Enhancer
     const ProfileScreen(),
   ];
 
@@ -45,7 +41,6 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.inventory_2_outlined), label: 'Products'),
           NavigationDestination(icon: Icon(Icons.local_shipping_outlined), label: 'Orders'),
-          NavigationDestination(icon: Icon(Icons.camera_alt_outlined), label: 'Try-On'),
           NavigationDestination(icon: Icon(Icons.camera_enhance_outlined), label: 'Studio'),
           NavigationDestination(icon: Icon(Icons.person_outline), label: 'Profile'),
         ],
