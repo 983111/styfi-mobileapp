@@ -1,147 +1,91 @@
-import 'dart:convert';
-import 'dart:io';
-import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../models.dart';
 
-class ApiService {
-  static const String baseUrl = 'https://styfi-backend.vishwajeetadkine705.workers.dev';
+class AuthService {
+  static final AuthService _instance = AuthService._internal();
+  factory AuthService() => _instance;
+  AuthService._internal();
 
-  static Future<String> fileToBase64(File file) async {
-    List<int> imageBytes = await file.readAsBytes();
-    return base64Encode(imageBytes);
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
+
+  final ValueNotifier<UserRole> roleNotifier = ValueNotifier(UserRole.buyer);
+  
+  UserRole get currentRole => roleNotifier.value;
+
+  Stream<User?> get authStateChanges => _auth.authStateChanges();
+  User? get currentUser => _auth.currentUser;
+
+  void init() {
+    _auth.authStateChanges().listen((User? user) {
+      if (user != null) {
+        _db.collection('users').doc(user.uid).snapshots().listen((snapshot) {
+          if (snapshot.exists) {
+            final appUser = AppUser.fromMap(snapshot.data()!, snapshot.id);
+            roleNotifier.value = appUser.role;
+          }
+        });
+      } else {
+        roleNotifier.value = UserRole.buyer;
+      }
+    });
   }
 
-  static Future<String?> networkImageToBase64(String imageUrl) async {
+  // Helper method to set role (Called by RoleSelectionScreen)
+  Future<void> setUserRole(UserRole role) async {
+    await switchRole(role);
+  }
+
+  Future<void> switchToSeller() async {
+    await switchRole(UserRole.seller);
+  }
+
+  Future<void> switchToBuyer() async {
+    await switchRole(UserRole.buyer);
+  }
+
+  Future<void> switchRole(UserRole newRole) async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      // Update Firestore
+      await _db.collection('users').doc(user.uid).set({
+        'role': newRole == UserRole.seller ? 'seller' : 'buyer'
+      }, SetOptions(merge: true));
+      
+      // Update local state
+      roleNotifier.value = newRole;
+    }
+  }
+
+  Future<String?> signUp(String email, String password) async {
     try {
-      final response = await http.get(Uri.parse(imageUrl));
-      if (response.statusCode == 200) {
-        return base64Encode(response.bodyBytes);
-      }
+      UserCredential result = await _auth.createUserWithEmailAndPassword(
+        email: email, 
+        password: password
+      );
+      await _db.collection('users').doc(result.user!.uid).set({
+        'email': email,
+        'role': 'buyer', // Default role
+        'createdAt': FieldValue.serverTimestamp(),
+      });
       return null;
-    } catch (e) {
-      print("Error fetching product image: $e");
+    } on FirebaseAuthException catch (e) {
+      return e.message;
+    }
+  }
+
+  Future<String?> signIn(String email, String password) async {
+    try {
+      await _auth.signInWithEmailAndPassword(email: email, password: password);
       return null;
+    } on FirebaseAuthException catch (e) {
+      return e.message;
     }
   }
 
-  static Future<List<TrendReport>> getTrends(String category) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/trends'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'category': category}),
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        return data.map((e) => TrendReport.fromJson(e)).toList();
-      }
-    } catch (e) {
-      print("Error fetching trends: $e");
-    }
-    
-    return [
-      TrendReport(
-          trendName: "Eco-Minimalism",
-          description: "Sustainable fabrics in neutral tones.",
-          popularityScore: 88,
-          keyKeywords: ["Linen", "Beige", "Organic"]),
-      TrendReport(
-          trendName: "Retro Sport",
-          description: "90s athletic wear revival.",
-          popularityScore: 75,
-          keyKeywords: ["Neon", "Vintage"]),
-    ];
-  }
-
-  static Future<List<OutfitSuggestion>> composeOutfit(String name, String category) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/compose-outfit'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'productName': name, 'productCategory': category}),
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        return data.map((e) => OutfitSuggestion.fromJson(e)).toList();
-      }
-    } catch (e) {
-      print("Error composing outfit: $e");
-    }
-    return [
-      OutfitSuggestion(
-          name: "Classic Denim Jeans",
-          reason: "Timeless piece.",
-          estimatedPrice: "\$60-\$90",
-          color: "Dark Blue"),
-    ];
-  }
-
-  static Future<AiResult?> enhanceImage(File imageFile, String description) async {
-    try {
-      final base64Data = await fileToBase64(imageFile);
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/enhance-image'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'imageData': base64Data,
-          'mimeType': 'image/jpeg', 
-          'description': description
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        // Correctly handle the response format from your worker.js
-        if (data['success'] == true && data['enhancedImage'] != null) {
-          return AiResult(type: 'url', data: data['enhancedImage']);
-        }
-        // Fallback for previous logic if needed
-        if (data['method'] == 'imagen' && data['imageData'] != null) {
-          return AiResult(type: 'image', data: data['imageData']);
-        } 
-      }
-    } catch (e) {
-      print("Error enhancing image: $e");
-    }
-    return null;
-  }
-
-  static Future<AiResult?> virtualTryOn(File userImage, String productImage) async {
-    try {
-      final userBase64 = await fileToBase64(userImage);
-      final productBase64 = await networkImageToBase64(productImage);
-
-      if (productBase64 == null) throw Exception("Failed to load product image");
-
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/virtual-tryon'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'userImageData': userBase64,
-          'userMimeType': 'image/jpeg',
-          'productImageData': productBase64,
-          'productMimeType': 'image/jpeg'
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        // Handle direct guide response from worker.js
-        if (data['visualizationGuide'] != null) {
-             return AiResult(type: 'guide', data: data['visualizationGuide']);
-        }
-        
-        if (data['method'] == 'imagen' && data['imageData'] != null) {
-          return AiResult(type: 'image', data: data['imageData']);
-        } else if (data['method'] == 'guide' && data['visualizationGuide'] != null) {
-          return AiResult(type: 'guide', data: data['visualizationGuide']);
-        }
-      }
-    } catch (e) {
-      print("Error in try-on: $e");
-    }
-    return null;
+  Future<void> signOut() async {
+    await _auth.signOut();
   }
 }
